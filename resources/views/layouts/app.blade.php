@@ -109,6 +109,20 @@
             justify-content: center;
         }
 
+        /* Header adjustments */
+        .header-container {
+            margin-left: 220px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header-container.sidebar-collapsed {
+            margin-left: 70px;
+        }
+
+        .header-container.no-sidebar {
+            margin-left: 0px;
+        }
+
         /* Main content */
         #app {
             margin-left: 220px;
@@ -126,7 +140,9 @@
 </head>
 
 <body>
-    @include('partials.header')
+    <div id="header-container" class="header-container {{ Auth::check() ? '' : 'no-sidebar' }}">
+        @include('partials.header')
+    </div>
 
     <div id="app" class="{{ Auth::check() ? '' : 'no-sidebar' }}">
         @if(Auth::check())
@@ -162,19 +178,22 @@
             const toggleBtn = document.getElementById('toggle-btn');
             const sidebar = document.getElementById('sidebar');
             const app = document.getElementById('app');
+            const headerContainer = document.getElementById('header-container');
 
-            if (toggleBtn && sidebar && app) {
+            if (toggleBtn && sidebar && app && headerContainer) {
                 // Load state from localStorage
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
                 if (isCollapsed) {
                     sidebar.classList.add('collapsed');
                     app.classList.add('sidebar-collapsed');
+                    headerContainer.classList.add('sidebar-collapsed');
                 }
 
                 // Toggle sidebar
                 toggleBtn.addEventListener('click', function () {
                     sidebar.classList.toggle('collapsed');
                     app.classList.toggle('sidebar-collapsed');
+                    headerContainer.classList.toggle('sidebar-collapsed');
 
                     // Save state
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));

@@ -9,10 +9,54 @@ use App\Models\User;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $news = News::all();
-        return view('admin.dashboard', compact('news'));
+        // Build query for news with search and filter
+        $query = News::with(['category', 'user']);
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+        
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+        
+        // Get paginated news
+        $news = $query->latest()->paginate(10)->withQueryString();
+        
+        // Dashboard statistics
+        $stats = [
+            'total_news' => News::count(),
+            'published_news' => News::where('status', 'published')->count(),
+            'draft_news' => News::where('status', 'draft')->count(),
+            'total_categories' => Category::count(),
+            'total_users' => User::count(),
+            'admin_users' => User::where('is_admin', true)->count(),
+        ];
+        
+        // Recent news (last 5)
+        $recent_news = News::with(['category', 'user'])
+            ->latest()
+            ->take(5)
+            ->get();
+        
+        // News by status for chart
+        $news_by_status = [
+            'published' => News::where('status', 'published')->count(),
+            'draft' => News::where('status', 'draft')->count(),
+        ];
+        
+        // News by category
+        $news_by_category = Category::withCount('news')->get();
+        
+        return view('admin.dashboard', compact('news', 'stats', 'recent_news', 'news_by_status', 'news_by_category'));
     }
 
 //   public function create()
@@ -72,6 +116,26 @@ class AdminController extends Controller
         $news->delete();
 
         return redirect()->route('admin.dashboard')->with('error', 'News deleted successfully!');
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $news = News::findOrFail($id);
+            $news->status = $news->status === 'published' ? 'draft' : 'published';
+            $news->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => "News status updated to {$news->status} successfully!",
+                'new_status' => $news->status
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the status.'
+            ], 500);
+        }
     }
 
     //User

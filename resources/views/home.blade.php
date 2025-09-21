@@ -40,12 +40,15 @@
     }
 </style>
 
-
 @section('content')
 <div class="container">
     <!-- Hero Section -->
-    <div class="home-hero text-center mb-5">
+    {{-- <div class="home-hero text-center mb-5">
         <h2>Welcome to NewsPortal 📰</h2>
+        <p class="lead">Your trusted source for the latest news and updates.</p>
+    </div> --}}
+    <div class="home-hero text-center mb-5">
+        <h2>Welcome to {{ $globalSetting->site_name ?? 'NewsPortal' }} 📰</h2>
         <p class="lead">Your trusted source for the latest news and updates.</p>
     </div>
 
@@ -53,31 +56,33 @@
     <div class="row">
         <div class="col-md-8">
             <h3 class="mb-3">Latest News</h3>
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Breaking News Title</h5>
-                    <p class="card-text">Short description of the news goes here...</p>
-                    <a href="#" class="btn btn-primary btn-sm">Read More</a>
-                </div>
-            </div>
 
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Another News Title</h5>
-                    <p class="card-text">Some quick preview text for the second news...</p>
-                    <a href="#" class="btn btn-primary btn-sm">Read More</a>
-                </div>
-            </div>
+@forelse ($latestNews as $news)
+<div class="card mb-3">
+    @if ($news->image)
+    <img src="{{ asset($news->image) }}" class="card-img-top" alt="{{ $news->title }}"
+        style="max-height: 300px; object-fit: cover;">
+    @endif
+    <div class="card-body">
+        <h5 class="card-title">{{ $news->title }}</h5>
+        <p class="card-text">{{ \Illuminate\Support\Str::limit($news->content, 100) }}</p>
+        <a href="{{ route('news.show', $news->id) }}" class="btn btn-primary btn-sm">Read More</a>
+    </div>
+</div>
+@empty
+<p>No published news available.</p>
+@endforelse
         </div>
 
         <!-- Sidebar Widgets -->
         <div class="col-md-4">
             <h3 class="mb-3">Categories</h3>
             <ul class="list-group mb-4">
-                <li class="list-group-item"><a href="#">Politics</a></li>
-                <li class="list-group-item"><a href="#">Sports</a></li>
-                <li class="list-group-item"><a href="#">Technology</a></li>
-                <li class="list-group-item"><a href="#">Entertainment</a></li>
+                @foreach ($categories as $category)
+                <li class="list-group-item">
+                    <a href="{{ route('category.show', $category->id) }}">{{ $category->name }}</a>
+                </li>
+                @endforeach
             </ul>
 
             <h3 class="mb-3">Trending</h3>
